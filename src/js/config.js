@@ -64,6 +64,7 @@ var STRINGS = {
     'optional_sub_title_label': 'オプション設定',
     'sub_sub_title_label': '置換設定',
     'dtd_title_label': 'Dynamic Template Data設定',
+    'custom_args_title_label': 'Custom Args設定 (Webhook用)',
     'group_text_label': 'テキストフィールド',
     'group_rich_text_label': 'リッチテキストフィールド',
     'group_array_label': '配列フィールド',
@@ -107,6 +108,7 @@ var STRINGS = {
     'optional_sub_title_label': 'Optional settings',
     'sub_sub_title_label': 'Substitution settings',
     'dtd_title_label': 'Dynamic Template Data',
+    'custom_args_title_label': 'Custom args settings (for Webhook)',
     'group_text_label': 'Text fields',
     'group_rich_text_label': 'Rich text fields',
     'group_array_label': 'Array fields',
@@ -195,7 +197,7 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     // Event : Select add substitution button.
     $('#add-sub').on('click', async function() {
       var resp = await kintone.api(
-        kintone.api.url('/k/v1/form',true), 'GET', {app: appId}
+        kintone.api.url('/k/v1/app/form/fields',true), 'GET', {app: appId}
       );
       addSub('', '', resp);
     });
@@ -203,9 +205,17 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     // Event : Select add dynamic template data button
     $('#add-dtd').on('click', async function() {
       var resp = await kintone.api(
-        kintone.api.url('/k/v1/form', true), 'GET', {app: appId}
+        kintone.api.url('/k/v1/app/form/fields', true), 'GET', {app: appId}
       );
       addDtd('', '', resp);
+    });
+
+    // Event : Select add custom args button
+    $('#add-custom_args').on('click', async function() {
+      var resp = await kintone.api(
+        kintone.api.url('/k/v1/app/form/fields', true), 'GET', {app: appId}
+      );
+      addCustomArgs('', resp);
     });
 
     // Event : Click Save Button
@@ -290,6 +300,23 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
           dtdNumber++;
         }
         saveConfig.dtdNumber = String(dtdNumber);
+        // custom args
+        if (saveConfig.customArgsNumber === undefined) {
+          saveConfig.customArgsNumber = 0;
+        }
+        for (var i = 0; i < saveConfig.customArgsNumber; i++) {
+          delete saveConfig['custom_args_code' + i];
+        }
+        var customArgsContainer = $('#custom_args_container');
+        var customArgsNumber = 0;
+        var customArgsRows = customArgsContainer.children('.custom_args-row');
+        for (var q = 0; q < customArgsRows.length; q++) {
+          var customArgsRow = customArgsRows.eq(q);
+          var customArgsVal = customArgsRow.find('.custom_args-val').val();
+          saveConfig['custom_args_code' + customArgsNumber] = customArgsVal;
+          customArgsNumber++;
+        }
+        saveConfig.customArgsNumber = String(customArgsNumber);
         //console.log(saveConfig);
         // Save proxy config
         var headers = getHeaders();
@@ -330,6 +357,12 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     return false;
   });
 
+  // Event : Click clear customArgsRow
+  $(document).on('click', '.clear-custom_args-row', function() {
+    $(this).closest('.custom_args-row').remove();
+    return false;
+  });
+
   function translateUI(lang) {
     $('#title_label').text(getStrings(lang, 'title_label'));
     $('#general_settings_label').text(getStrings(lang, 'general_settings_label'));
@@ -354,6 +387,7 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     $('#optional_sub_title_label').text(getStrings(lang, 'optional_sub_title_label'));
     $('#sub_sub_title_label').text(getStrings(lang, 'sub_sub_title_label'));
     $('#dtd_title_label').text(getStrings(lang, 'dtd_title_label'));
+    $('#custom_args_title_label').text(getStrings(lang, 'custom_args_title_label'));
     $('#save_btn').text(getStrings(lang, 'save_btn'));
     $('#cancel_btn').text(getStrings(lang, 'cancel_btn'));
     $('#dtd_help_label').text(getStrings(lang, 'dtd_help_label'));
@@ -532,7 +566,7 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
 
   async function getKintoneFields() {
     return await kintone.api(
-      kintone.api.url('/k/v1/form',true), 'GET', {app: appId}
+      kintone.api.url('/k/v1/app/form/fields',true), 'GET', {app: appId}
     );
   }
 
@@ -543,28 +577,28 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     toNameSelect.append($('<option/>'));
     var knFields = resp.properties;
 
-    for (var i = 0; i < knFields.length; i++) {
-      if (isEmailField(knFields[i])) {
+    for (var code of Object.keys(knFields).sort()) {
+      if (isEmailField(knFields[code])) {
         // To
         var opTo = $('<option/>');
-        opTo.attr('value', knFields[i].code);
-        if (config.emailFieldCode === knFields[i].code) {
+        opTo.attr('value', code);
+        if (config.emailFieldCode === code) {
           opTo.prop('selected', true);
         }
         opTo.text(
-          knFields[i].label + '(' + knFields[i].code + ')'
+          knFields[code].label + '(' + code + ')'
         );
         toSelect.append(opTo);
       }
-      if (isTextField(knFields[i])) {
+      if (isTextField(knFields[code])) {
         // To name
         var opToName = $('<option/>');
-        opToName.attr('value', knFields[i].code);
-        if (config.toNameFieldCode === knFields[i].code) {
+        opToName.attr('value', code);
+        if (config.toNameFieldCode === code) {
           opToName.prop('selected', true);
         }
         opToName.text(
-          knFields[i].label + '(' + knFields[i].code + ')'
+          knFields[code].label + '(' + code + ')'
         );
         toNameSelect.append(opToName);
       }
@@ -574,6 +608,9 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     }
     for (var k = 0; k < config.dtdNumber; k++) {
       addDtd(config['dtd_key_' + k], config['dtd_val_' + k], resp);
+    }
+    for (var k = 0; k < config.customArgsNumber; k++) {
+      addCustomArgs(config['custom_args_code' + k], resp);
     }
   }
 
@@ -612,10 +649,9 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
       .attr('id', 'code-outer' + idx);
     var valDiv = $('<div/>').addClass('kintoneplugin-select');
     var valSelect = $('<select/>').addClass('sub-val').attr('id', 'field_select' + idx);
-    for (var i = 0; i < resp.properties.length; i++) {
-      var code = resp.properties[i].code;
-      var label = resp.properties[i].label;
-      if (isTextField(resp.properties[i])) {
+    for (var code of Object.keys(resp.properties).sort()) {
+      var label = resp.properties[code].label;
+      if (isTextField(resp.properties[code])) {
         var valOption = $('<option/>');
         valOption.attr('value', code);
         if (default_code == code) {
@@ -683,11 +719,10 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     var valSelect = $('<select/>').addClass('dtd-val').attr('id', 'dtd_field_select' + idx);
     // Text fields
     valSelect.append($('<optgroup/>').attr('label', getStrings(lang, 'group_text_label')));
-    for (var i = 0; i < resp.properties.length; i++) {
-      var code = resp.properties[i].code;
-      var label = resp.properties[i].label;
-      if (isTextField(resp.properties[i]) ||
-        isMultiLineTextField(resp.properties[i])) {
+    for (var code of Object.keys(resp.properties).sort()) {
+      var label = resp.properties[code].label;
+      if (isTextField(resp.properties[code]) ||
+        isMultiLineTextField(resp.properties[code])) {
         valSelect.append(
           makeDtdOption(label, code, default_code)
         );
@@ -695,10 +730,9 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     }
     // Rich text fields
     valSelect.append($('<optgroup/>').attr('label', getStrings(lang, 'group_rich_text_label')));
-    for (var i = 0; i < resp.properties.length; i++) {
-      var code = resp.properties[i].code;
-      var label = resp.properties[i].label;
-      if (isRichTextField(resp.properties[i])) {
+    for (var code of Object.keys(resp.properties).sort()) {
+      var label = resp.properties[code].label;
+      if (isRichTextField(resp.properties[code])) {
         valSelect.append(
           makeDtdOption(label, code, default_code)
         );
@@ -706,10 +740,9 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     }
     // Array fields
     valSelect.append($('<optgroup/>').attr('label', getStrings(lang, 'group_array_label')));
-    for (var i = 0; i < resp.properties.length; i++) {
-      var code = resp.properties[i].code;
-      var label = resp.properties[i].label;
-      if (isArrayField(resp.properties[i])) {
+    for (var code of Object.keys(resp.properties).sort()) {
+      var label = resp.properties[code].label;
+      if (isArrayField(resp.properties[code])) {
         valSelect.append(makeDtdOption(label, code, default_code));
       }
     }
@@ -726,6 +759,58 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     dtdRow.append(rightBlock);
     dtdRow.append(clearBlock);
     dtdContainer.append(dtdRow);
+  }
+
+  function addCustomArgs(default_code, resp) {
+    var customArgsContainer = $('#custom_args_container');
+    var idx = 0;
+    if (customArgsContainer !== undefined && customArgsContainer.children().length > 0) {
+      idx = customArgsContainer.children().length;
+    }
+    var customArgsRow = $('<div/>').addClass('child-block').addClass('custom_args-row');
+    // Right block
+    var rightBlock = $('<div/>');
+    var valLabel = $('<div/>').append(
+      $('<label/>').text(getStrings(lang, 'kintone_field'))
+    );
+    var valInput =
+      $('<div/>')
+      .addClass('kintoneplugin-select-outer')
+      .attr('id', 'code-outer' + idx);
+    var valDiv = $('<div/>').addClass('kintoneplugin-select');
+    var valSelect = $('<select/>').addClass('custom_args-val').attr('id', 'custom_args_field_select' + idx);
+    for (var code of Object.keys(resp.properties).sort()) {
+      if (resp.properties[code].type.match(/GROUP|STATUS|.+TABLE/)) {
+        continue;
+      }
+      var label = resp.properties[code].label;
+      var valOption = $('<option/>');
+      valOption.attr('value', code);
+      if (default_code == code) {
+        valOption.prop('selected', true);
+      }
+      valOption.text(label + '(' + code + ')');
+      valSelect.append(valOption);
+    }
+    // Clear block
+    var clearBlock = $('<div/>').addClass('child-vertical-center')
+      .append(
+        $('<a/>')
+        .addClass('clear-custom_args-row')
+        .addClass('link-button')
+        .prop('href', '#')
+        .append(
+          $('<i/>')
+          .addClass('material-icons')
+          .text('clear')
+        )
+      );
+    valDiv.append(valSelect);
+    valInput.append(valDiv);
+    rightBlock.append(valLabel).append(valInput);
+    customArgsRow.append(rightBlock);
+    customArgsRow.append(clearBlock);
+    customArgsContainer.append(customArgsRow);
   }
 
   function makeDtdOption(label, code, default_code) {

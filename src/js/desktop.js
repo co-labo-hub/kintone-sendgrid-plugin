@@ -260,6 +260,10 @@ var STRINGS = {
         for (var k = 0; k < config.subNumber; k++) {
           personalization.substitutions[config['val'+k]] = records[i][config['code'+k]].value;
         }
+        personalization.custom_args = {};
+        for (var k = 0; k < config.customArgsNumber; k++) {
+          personalization.custom_args[config['custom_args_code'+k]] = records[i][config['custom_args_code'+k]].value;
+        }
         personalizations.push(personalization);
       }
     } else {
@@ -280,10 +284,14 @@ var STRINGS = {
         for (var k = 0; k < config.dtdNumber; k++) {
           personalization.dynamic_template_data[config['dtd_key_'+k]] = records[i][config['dtd_val_'+k]].value;
         }
+        personalization.custom_args = {};
+        for (var k = 0; k < config.customArgsNumber; k++) {
+          personalization.custom_args[config['custom_args_code'+k]] = records[i][config['custom_args_code'+k]].value;
+        }
         personalizations.push(personalization);
       }
     }
-    param.personalizations = personalizations;
+  param.personalizations = personalizations;
     param.from = {'email': config.from, 'name': config.fromName};
     param.template_id = $('#temp_select').val();
     param.mail_settings = {};
