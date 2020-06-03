@@ -291,11 +291,14 @@ var STRINGS = {
         personalizations.push(personalization);
       }
     }
-  param.personalizations = personalizations;
+    param.personalizations = personalizations;
     param.from = {'email': config.from, 'name': config.fromName};
     param.template_id = $('#temp_select').val();
     param.mail_settings = {};
     param.mail_settings.sandbox_mode = {'enable': sandbox_mode};
+    if (config.unsubscribeGroupId) {
+      param.asm = {"group_id": Number(config.unsubscribeGroupId)};
+    }
     if (config.contentType === 'text/plain') {
       param.content = [];
       param.content.push({'type': 'text/plain', 'value': ' '});

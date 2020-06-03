@@ -65,6 +65,7 @@ var STRINGS = {
     'sub_sub_title_label': '置換設定',
     'dtd_title_label': 'Dynamic Template Data設定',
     'custom_args_title_label': 'Custom Args設定 (Webhook用)',
+    'unsubscribe_groups_container_label': 'Unsubscribe Groups',
     'group_text_label': 'テキストフィールド',
     'group_rich_text_label': 'リッチテキストフィールド',
     'group_array_label': '配列フィールド',
@@ -82,7 +83,8 @@ var STRINGS = {
     'template_required': 'メールテンプレートは必須です',
     'template_generation_required': 'テンプレート種別の選択は必須です',
     'kintone_field': 'kintoneのフィールド',
-    'dtd_help_label':'Dynamic Template Dataに設定するパラメータを「キー：値」形式で指定します。'
+    'dtd_help_label':'Dynamic Template Dataに設定するパラメータを「キー：値」形式で指定します。',
+    'unsubscribe_group_id_label': 'GROUP ID'
   },
   'default': {
     'title_label': 'SendGrid Plug-in Settings',
@@ -109,6 +111,7 @@ var STRINGS = {
     'sub_sub_title_label': 'Substitution settings',
     'dtd_title_label': 'Dynamic Template Data',
     'custom_args_title_label': 'Custom args settings (for Webhook)',
+    'unsubscribe_groups_container_label': 'Unsubscribe Groups',
     'group_text_label': 'Text fields',
     'group_rich_text_label': 'Rich text fields',
     'group_array_label': 'Array fields',
@@ -126,7 +129,8 @@ var STRINGS = {
     'template_required': 'Mail Template is required',
     'template_generation_required': 'Template type is required',
     'kintone_field': 'kintone Field',
-    'dtd_help_label': 'Add the parameters to be set in Dynamic Template Data by [key: value] format.'
+    'dtd_help_label': 'Add the parameters to be set in Dynamic Template Data by [key: value] format.',
+    'unsubscribe_group_id_label': 'GROUP ID'
   }
 };
 
@@ -317,6 +321,7 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
           customArgsNumber++;
         }
         saveConfig.customArgsNumber = String(customArgsNumber);
+        saveConfig.unsubscribeGroupId = $('#unsubscribe_group_id').val();
         //console.log(saveConfig);
         // Save proxy config
         var headers = getHeaders();
@@ -388,6 +393,8 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     $('#sub_sub_title_label').text(getStrings(lang, 'sub_sub_title_label'));
     $('#dtd_title_label').text(getStrings(lang, 'dtd_title_label'));
     $('#custom_args_title_label').text(getStrings(lang, 'custom_args_title_label'));
+    $('#unsubscribe_groups_container_label').text(getStrings(lang, 'unsubscribe_groups_container_label'));
+    $('#unsubscribe_group_id_label').text(getStrings(lang, 'unsubscribe_group_id_label'));
     $('#save_btn').text(getStrings(lang, 'save_btn'));
     $('#cancel_btn').text(getStrings(lang, 'cancel_btn'));
     $('#dtd_help_label').text(getStrings(lang, 'dtd_help_label'));
@@ -446,6 +453,8 @@ var EXP_DTD = /^[a-zA-Z0-9!--/:-@¥[-`|~]+$/;
     $('#sandbox_mode').prop('checked', sandboxMode === 'true');
     // Refresh optional settings
     refreshOptionalSettings(templateGeneration);
+    // Unsubscribe Groups
+    $('#unsubscribe_group_id').val(config.unsubscribeGroupId);
     // Show kintone data
     await showKintoneData();
   }
